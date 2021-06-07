@@ -144,7 +144,7 @@ struct Modulations {
   bool morph_patched;
   bool trigger_patched;
   bool level_patched;
-};
+  };
 
 class Voice {
  public:
@@ -227,6 +227,14 @@ class Voice {
   
   float out_buffer_[kMaxBlockSize];
   float aux_buffer_[kMaxBlockSize];
+  
+   //bgFMI
+  bool model_cv_to_MODEL;
+  bool model_cv_to_LPG;
+  bool model_cv_to_TIMBRE_AMT;
+  bool model_cv_to_FM_AMT;
+  bool model_cv_to_MORPH_AMT;
+  bool model_cv_to_DECAY;
   
   DISALLOW_COPY_AND_ASSIGN(Voice);
 };

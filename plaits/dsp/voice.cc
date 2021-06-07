@@ -72,6 +72,15 @@ void Voice::Init(BufferAllocator* allocator) {
   previous_note_ = 0.0f;
   
   trigger_delay_.Init(trigger_delay_line_);
+  
+  //bgFMI
+  model_cv_to_MODEL = false;
+  model_cv_to_LPG = false;
+  model_cv_to_TIMBRE_AMT = true;
+  model_cv_to_FM_AMT = false;
+  model_cv_to_MORPH_AMT = false;
+  model_cv_to_DECAY = false;
+  
 }
 
 void Voice::Render(
@@ -94,7 +103,9 @@ void Voice::Render(
         lpg_envelope_.Trigger();
       }
       decay_envelope_.Trigger();
-      engine_cv_ = modulations.engine;
+      //bgFMI Comment this out to disengage the MODEL cv from flipping through the engines.
+      engine_cv_ = model_cv_to_MODEL ? modulations.engine : 0.0f;
+      
     }
   } else {
     if (trigger_value < 0.1f) {
@@ -102,7 +113,9 @@ void Voice::Render(
     }
   }
   if (!modulations.trigger_patched) {
-    engine_cv_ = modulations.engine;
+    //bgFMI Comment this out to disengage the MODEL cv from flipping through the engines.
+    engine_cv_ = model_cv_to_MODEL ? modulations.engine : 0.0f;
+      //engine_cv_ = modulations.engine;
   }
 
   // Engine selection.
@@ -132,8 +145,14 @@ void Voice::Render(
     p.trigger = TRIGGER_UNPATCHED;
   }
   
-  const float short_decay = (200.0f * kBlockSize) / kSampleRate *
-      SemitonesToRatio(-96.0f * patch.decay);
+  //bgFMI This block allows us to mod decay with the MODAL cv input.
+  float cv_decay = -96.0f * (patch.decay + (model_cv_to_DECAY ? (modulations.engine * 0.75f) : 0.0f));
+  CONSTRAIN(cv_decay, -127.0f, 127.0f);
+  float short_decay = (200.0f * kBlockSize) / kSampleRate * \
+      SemitonesToRatio(cv_decay);
+  CONSTRAIN(short_decay,-1.0f,0.75f); // Positive one is a very short decay.
+  /*const float short_decay = (200.0f * kBlockSize) / kSampleRate *
+      SemitonesToRatio(-96.0f * patch.decay); */
 
   decay_envelope_.Process(short_decay * 2.0f);
 
@@ -163,7 +182,8 @@ void Voice::Render(
 
   p.note = ApplyModulations(
       patch.note + note,
-      patch.frequency_modulation_amount,
+      patch.frequency_modulation_amount + \
+          (model_cv_to_FM_AMT ? modulations.engine : 0.0f),
       modulations.frequency_patched,
       modulations.frequency,
       use_internal_envelope,
@@ -175,7 +195,8 @@ void Voice::Render(
 
   p.timbre = ApplyModulations(
       patch.timbre,
-      patch.timbre_modulation_amount,
+      patch.timbre_modulation_amount + \
+          (model_cv_to_TIMBRE_AMT ? modulations.engine : 0.0f),
       modulations.timbre_patched,
       modulations.timbre,
       use_internal_envelope,
@@ -204,6 +225,7 @@ void Voice::Render(
   // Compute LPG parameters.
   if (!lpg_bypass) {
     const float hf = patch.lpg_colour;
+    
     const float decay_tail = (20.0f * kBlockSize) / kSampleRate *
         SemitonesToRatio(-72.0f * patch.decay + 12.0f * hf) - short_decay;
     
