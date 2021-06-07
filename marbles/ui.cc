@@ -182,7 +182,7 @@ LedColor Ui::DejaVuColor(DejaVuState state, bool lock) {
     int fast_triangle = (system_clock.milliseconds() & 511) >> 4;
     fast_triangle = fast_triangle >= 16 ? 31 - fast_triangle : fast_triangle;
     int pw = system_clock.milliseconds() & 15;
-
+    //bgFMI I changed GREEN to RED here for the lock, just to see what happens. Nothing, it can't do other colors besides green.
     return fast_triangle >= pw ? LED_COLOR_GREEN : LED_COLOR_OFF;
   }
 }

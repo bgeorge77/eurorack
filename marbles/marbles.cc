@@ -51,6 +51,8 @@
 #include "stmlib/dsp/hysteresis_quantizer.h"
 #include "stmlib/dsp/units.h"
 
+
+
 #define PROFILE_INTERRUPT 0
 #define PROFILE_RENDER 0
 
@@ -177,7 +179,26 @@ void ProcessTest(IOBuffer::Block* block, size_t size) {
   }
 }
 
+
+
+//bgFMI Ordered all the twos on the right, threes on the left.
+//It works, it just doesn't update the ratio till the previous ratio is done. 
 Ratio y_divider_ratios[] = {
+  { 1, 48 },
+  { 1, 24 },
+  { 1, 12 },
+  { 1, 6 },
+  { 1, 3 },
+  { 1, 1 },
+  { 1, 2 },
+  { 1, 4 },
+  { 1, 8 },
+  { 1, 16 },
+  { 1, 32 },
+  { 1, 64 },
+};
+//bgFMI Uncomment to return to main trunk. 
+/*Ratio y_divider_ratios[] = {
   { 1, 64 },
   { 1, 48 },
   { 1, 32 },
@@ -190,7 +211,9 @@ Ratio y_divider_ratios[] = {
   { 1, 3 },
   { 1, 2 },
   { 1, 1 },
-};
+};*/
+
+
 
 int loop_length[] = {
   1,
@@ -198,14 +221,24 @@ int loop_length[] = {
   3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
   4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
   5, 5, 5, 5,
-  6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+  6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7,
   7, 7,
-  8, 8, 8, 8, 8, 8, 8, 8, 8,
+  8, 8, 8, 8, 8, 8, 8, 9, 9,
   10, 10, 10,
-  12, 12, 12, 12, 12, 12, 12,
-  14,
+  12, 12, 12, 12, 12, 12, 13,
+  15,
   16
 };
+
+//ADDED BY bgFMI to lengthen loops
+int loop_length_mults[] = {
+//There are three t_range values, /4, 1x and 4x.
+1, //for /4. Should be 0.25, But what is a fractional loop length?
+1, //for 1x 
+4  //for 4x
+};
+//bgFMI outtahere
+
 float parameters[kNumParameters];
 float ramp_buffer[kBlockSize * 4];
 bool gates[kBlockSize * 2];
@@ -274,7 +307,8 @@ void Process(IOBuffer::Block* block, size_t size) {
   ramps.slave[1] = &ramp_buffer[kBlockSize * 3];
   
   const State& state = settings.state();
-  int deja_vu_length = deja_vu_length_quantizer.Lookup(
+  //bgFMI added this multiplier loop length mults, indexed by t_range 
+  int deja_vu_length = loop_length_mults[state.t_range] * deja_vu_length_quantizer.Lookup(
       loop_length,
       parameters[ADC_CHANNEL_DEJA_VU_LENGTH],
       sizeof(loop_length) / sizeof(int));
