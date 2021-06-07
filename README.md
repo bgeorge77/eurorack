@@ -1,3 +1,5 @@
+This branch has bgFMI's edits to a few modules. 
+
 Mutable Instruments' Eurorack Modules.
 
 * [Blinds](http://mutable-instruments.net/modules/blinds): Quad VC-polarizer.
