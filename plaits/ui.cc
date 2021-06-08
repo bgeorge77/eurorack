@@ -341,16 +341,15 @@ void Ui::ReadSwitches() {
     
     //bgFMI
     case UI_MODE_DISPLAY_MODEL_CV_ROUTING:
-      UpdateLEDs();
       if (switches_.released(Switch(1))) {
         patch_->model_cv_target = (patch_->model_cv_target + 1) % 6; //Six modes
       }
       if (switches_.released(Switch(0))) {
         ignore_release_[1] = false;
         press_time_[0] = press_time_[1] = 0;
+        SaveState();
         mode_= UI_MODE_NORMAL;
       }
-      SaveState();
     break;
     
     case UI_MODE_DISPLAY_ALTERNATE_PARAMETERS:
