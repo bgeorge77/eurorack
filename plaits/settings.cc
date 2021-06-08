@@ -75,6 +75,8 @@ bool Settings::Init() {
   state_.decay = 128;
   state_.octave = 255;
   state_.color_blind = 0;
+  //bgFMI
+  state_.model_cv_routing = 0;
   
   bool success = chunk_storage_.Init(&persistent_data_, &state_);
   

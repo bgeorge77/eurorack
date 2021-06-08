@@ -82,6 +82,12 @@ void Ui::Init(Patch* patch, Modulations* modulations, Settings* settings) {
       &patch->frequency_modulation_amount, NULL, 2.0f, -1.0f);
   pots_[POTS_ADC_CHANNEL_MORPH_ATTENUVERTER].Init(
       &patch->morph_modulation_amount, NULL, 2.0f, -1.0f);
+  /*
+  pots_[POTS_ADC_CHANNEL_TIMBRE_ATTENUVERTER].Init(
+      &patch->timbre_modulation_amount, &patch->model_cv_target, 2.0f, -1.0f);
+  */  
+  //bgFMI DUMMY set the target to zero for now.
+  patch_->model_cv_target = model_cv_routing_;
   
   // Keep track of the agreement between the random sequence sent to the 
   // switch and the value read by the ADC.
@@ -109,6 +115,8 @@ void Ui::LoadState() {
   patch_->lpg_colour = static_cast<float>(state.lpg_colour) / 256.0f;
   patch_->decay = static_cast<float>(state.decay) / 256.0f;
   octave_ = static_cast<float>(state.octave) / 256.0f;
+  //bgFMI
+  model_cv_routing_ = state.model_cv_routing;
 }
 
 void Ui::SaveState() {
@@ -117,6 +125,8 @@ void Ui::SaveState() {
   state->lpg_colour = static_cast<uint8_t>(patch_->lpg_colour * 256.0f);
   state->decay = static_cast<uint8_t>(patch_->decay * 256.0f);
   state->octave = static_cast<uint8_t>(octave_ * 256.0f);
+  //bgFMI
+  state->model_cv_routing = patch_->model_cv_target;
   settings_->SaveState();
 }
 
@@ -190,7 +200,22 @@ void Ui::UpdateLEDs() {
 #endif  // ENABLE_LFO_MODE
       }
       break;
-      
+    
+    //bgFMI 
+    case UI_MODE_DISPLAY_MODEL_CV_ROUTING:
+      {
+       //Six targets for MODEL's CV routing: 
+       //    0 MODEL, 1 LPG, 2 TIMBRE AMT, 3 FM AMT, 4 MORPH AMT, 5 DECAY     
+       for (int i = 0; i < 6; i++){
+         if (patch_->model_cv_target == i) {
+          leds_.set(i, LED_COLOR_GREEN);
+         } else {
+          leds_.set(i, LED_COLOR_RED);
+        }
+       }
+      }
+      break;
+    
     case UI_MODE_CALIBRATION_C1:
       if (pwm_counter < triangle) {
         leds_.set(0, LED_COLOR_GREEN);
@@ -248,6 +273,7 @@ void Ui::ReadSwitches() {
           pots_[POTS_ADC_CHANNEL_TIMBRE_POT].Lock();
           pots_[POTS_ADC_CHANNEL_MORPH_POT].Lock();
         }
+        
         if (switches_.just_pressed(Switch(1))) {
           pots_[POTS_ADC_CHANNEL_HARMONICS_POT].Lock();
         }
@@ -261,13 +287,24 @@ void Ui::ReadSwitches() {
           mode_ = UI_MODE_DISPLAY_OCTAVE;
         }
         
+        //bgFMI Hold WRENCH and tap LEVEL to cycle through MODEL CV routings.
+        if (switches_.pressed(Switch(0)) &&
+            switches_.released(Switch(1))) {
+              ignore_release_[1] = true;
+              mode_ = UI_MODE_DISPLAY_MODEL_CV_ROUTING; 
+        }
+              
+        //bgFMI No more calibration!
+        /*
         // Long, double press: enter calibration mode.
         if (press_time_[0] >= kLongPressTime &&
             press_time_[1] >= kLongPressTime) {
           press_time_[0] = press_time_[1] = 0;
           RealignPots();
+          
           StartCalibration();
         }
+        */
         
         // Long press or actually editing any hidden parameter: display value
         // of hidden parameters.
@@ -301,7 +338,21 @@ void Ui::ReadSwitches() {
         }
       }
       break;
-      
+    
+    //bgFMI
+    case UI_MODE_DISPLAY_MODEL_CV_ROUTING:
+      UpdateLEDs();
+      if (switches_.released(Switch(1))) {
+        patch_->model_cv_target = (patch_->model_cv_target + 1) % 6; //Six modes
+      }
+      if (switches_.released(Switch(0))) {
+        ignore_release_[1] = false;
+        press_time_[0] = press_time_[1] = 0;
+        mode_= UI_MODE_NORMAL;
+      }
+      SaveState();
+    break;
+    
     case UI_MODE_DISPLAY_ALTERNATE_PARAMETERS:
     case UI_MODE_DISPLAY_OCTAVE:
       for (int i = 0; i < SWITCH_LAST; ++i) {

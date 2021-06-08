@@ -52,7 +52,9 @@ enum UiMode {
   UI_MODE_CALIBRATION_C1,
   UI_MODE_CALIBRATION_C3,
   UI_MODE_TEST,
-  UI_MODE_ERROR
+  UI_MODE_ERROR,
+  //bgFMI
+  UI_MODE_DISPLAY_MODEL_CV_ROUTING,
 };
 
 enum FactoryTestingCommand {
@@ -118,6 +120,9 @@ class Ui {
   PotController pots_[POTS_ADC_CHANNEL_LAST];
   float pitch_lp_;
   float pitch_lp_calibration_;
+  
+  //bgFMI
+  uint8_t model_cv_routing_;
   
   Settings* settings_;
   

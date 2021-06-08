@@ -58,6 +58,8 @@ struct State {
   uint8_t octave;
   uint8_t color_blind;
   uint8_t padding[3];
+  //bgFMI
+  uint8_t model_cv_routing;
   enum { tag = 0x54415453 };  // STAT
 };
 
