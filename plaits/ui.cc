@@ -286,13 +286,6 @@ void Ui::ReadSwitches() {
         if (pots_[POTS_ADC_CHANNEL_HARMONICS_POT].editing_hidden_parameter()) {
           mode_ = UI_MODE_DISPLAY_OCTAVE;
         }
-        
-        //bgFMI Hold WRENCH and tap LEVEL to cycle through MODEL CV routings.
-        if (switches_.pressed(Switch(0)) &&
-            switches_.released(Switch(1))) {
-              ignore_release_[1] = true;
-              mode_ = UI_MODE_DISPLAY_MODEL_CV_ROUTING; 
-        }
               
         //bgFMI No more calibration!
         /*
@@ -315,6 +308,13 @@ void Ui::ReadSwitches() {
         if (press_time_[1] >= kLongPressTime && !press_time_[0]) {
           press_time_[0] = press_time_[1] = 0;
           mode_ = UI_MODE_DISPLAY_OCTAVE;
+        }
+        
+        //bgFMI Hold WRENCH and tap LEVEL to cycle through MODEL CV routings.
+        if (switches_.pressed(Switch(0)) &&
+            switches_.released(Switch(1))) {
+              ignore_release_[1] = true;
+              mode_ = UI_MODE_DISPLAY_MODEL_CV_ROUTING; 
         }
         
         if (switches_.released(Switch(0)) && !ignore_release_[0]) {
@@ -343,6 +343,7 @@ void Ui::ReadSwitches() {
     case UI_MODE_DISPLAY_MODEL_CV_ROUTING:
       if (switches_.released(Switch(1))) {
         patch_->model_cv_target = (patch_->model_cv_target + 1) % 6; //Six modes
+        press_time_[0] = press_time_[1] = 0; //Don't let the long press trigger.
       }
       if (switches_.released(Switch(0))) {
         ignore_release_[1] = false;
