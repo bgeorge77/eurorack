@@ -37,8 +37,9 @@
 
 namespace marbles {
 
-const int kDejaVuBufferSize = 16;
-const int kHistoryBufferSize = 16;
+//bgFMI changed these both from 16 to 64 for longer loops.
+const int kDejaVuBufferSize = 64;
+const int kHistoryBufferSize = 64;
 
 const float kMaxUint32 = 4294967296.0f;
 

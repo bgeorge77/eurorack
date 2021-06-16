@@ -46,11 +46,11 @@ enum TGeneratorModel {
   T_GENERATOR_MODEL_CLUSTERS,
   T_GENERATOR_MODEL_DRUMS,
 
+//bgFMI rearranged these, originally was INDEP, DIVIDER, THREE and Markov was out.
   T_GENERATOR_MODEL_THREE_STATES,
   T_GENERATOR_MODEL_DIVIDER,
   T_GENERATOR_MODEL_MARKOV,
   
-  //bgFMI Swap this to the previous to play with Markov? YES
   T_GENERATOR_MODEL_INDEPENDENT_BERNOULLI,
 };
 
